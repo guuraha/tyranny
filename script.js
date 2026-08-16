@@ -1,76 +1,12 @@
-(() => {
-  const body = document.body;
-  const eye = document.getElementById('eyeImage');
-  const tear = document.getElementById('tearImage');
-  const landing = document.getElementById('landing');
-  const trigger = document.getElementById('menuTrigger');
-  const overlay = document.getElementById('menuOverlay');
-  const close = document.getElementById('menuClose');
-
-  /*
-    IMAGE-DRIVEN ANIMATION
-    Replace only these image files in /assets and the sequence still works.
-    Recommended transparent PNG/WebP dimensions: eye 1200x600, tear 300x800.
-  */
-  const frames = {
-    moon: 'assets/moon.png',
-    eyeOpen: 'assets/eye_open.png',
-    eyeHalf: 'assets/eye_half.png',
-    eyeClosed: 'assets/eye_closed.png',
-    tear1: 'assets/tear_01.png',
-    tear2: 'assets/tear_02.png',
-    tear3: 'assets/tear_03.png',
-    tear4: 'assets/tear_04.png'
-  };
-
-  function swap(img, src){ img.src = src; }
-
-  function runSequence(){
-    body.classList.add('sequence');
-
-    setTimeout(() => swap(eye, frames.eyeOpen), 1200);
-    setTimeout(() => swap(eye, frames.eyeHalf), 4550);
-    setTimeout(() => swap(eye, frames.eyeClosed), 5350);
-
-    setTimeout(() => { swap(tear, frames.tear1); tear.style.opacity = '1'; }, 5500);
-    setTimeout(() => swap(tear, frames.tear2), 5850);
-    setTimeout(() => swap(tear, frames.tear3), 6200);
-    setTimeout(() => swap(tear, frames.tear4), 6550);
-
-    // The missing part in the previous version:
-    // after the eye closes, automatically move to the archive.
-    setTimeout(() => {
-      body.classList.add('finished');
-      document.getElementById('archive').scrollIntoView({behavior:'smooth', block:'start'});
-    }, 7600);
-  }
-
-  window.addEventListener('load', () => setTimeout(runSequence, 400), {once:true});
-
-  function openMenu(){
-    overlay.classList.add('open');
-    document.body.style.overflow='hidden';
-  }
-  function closeMenu(){
-    overlay.classList.remove('open');
-    document.body.style.overflow='';
-  }
-  trigger.addEventListener('click', openMenu);
-  close.addEventListener('click', closeMenu);
-  overlay.addEventListener('click', e => { if(e.target === overlay) closeMenu(); });
-  overlay.querySelectorAll('a').forEach(a => a.addEventListener('click', closeMenu));
-  document.addEventListener('keydown', e => { if(e.key === 'Escape') closeMenu(); });
-
-  // If user manually returns to the landing section, keep the closed-eye landing state.
-  let leftOnce = false;
-  const observer = new IntersectionObserver(entries => {
-    entries.forEach(entry => {
-      if(entry.target === landing && entry.isIntersecting && body.classList.contains('finished')){
-        leftOnce = true;
-        swap(eye, frames.eyeClosed);
-        tear.style.opacity = '0';
-      }
-    });
-  }, {threshold:.55});
-  observer.observe(landing);
-})();
+gsap.registerPlugin(ScrollTrigger);
+const lenis=new Lenis({autoRaf:false,lerp:.09,smoothWheel:true,syncTouch:true});
+lenis.on('scroll',ScrollTrigger.update);gsap.ticker.add(t=>lenis.raf(t*1000));gsap.ticker.lagSmoothing(1000,16);
+const intro=gsap.timeline({defaults:{ease:'power3.out'}});
+intro.set('.top-label',{y:-10}).set('.portrait-wrap',{scale:.92,opacity:0,filter:'blur(15px)'}).set('.orbit-main,.orbit-eye',{scale:.82,opacity:0}).set('.moon-glow',{opacity:0}).set('.water',{y:30,opacity:0})
+.to('.top-label',{opacity:.55,y:0,duration:1.2},.1).to('.moon-glow',{opacity:1,duration:2},.2).to('.portrait-wrap',{scale:1,opacity:1,filter:'blur(0)',duration:2.2},.45).to('.orbit-main',{scale:1,opacity:1,duration:1.5},.9).to('.orbit-eye',{scale:1,opacity:1,duration:1.3},1.1).to('.water',{y:0,opacity:1,duration:1.8},.75).to('.scroll-cue',{opacity:.6,duration:1},2.4);
+gsap.to('.moon-glow',{scale:1.08,opacity:.8,duration:3,repeat:-1,yoyo:true,ease:'sine.inOut'});
+// 페이지 전환은 snap으로 처리하고, 첫 화면은 회전 자체가 계속 진행됩니다.
+gsap.to('.portrait-wrap',{scale:.96,y:'-3vh',opacity:.72,ease:'none',scrollTrigger:{trigger:'#hero',start:'top top',end:'bottom top',scrub:1.5}});
+gsap.to('.orbit-main',{scale:1.05,opacity:.65,ease:'none',scrollTrigger:{trigger:'#hero',start:'top top',end:'bottom top',scrub:1.5}});
+['#page2','#page3','#page4','#page5'].forEach(sel=>{const el=document.querySelector(sel);if(!el)return;gsap.from(el.querySelectorAll('.under-copy,.story-line,.guide-inner>*'),{y:35,opacity:0,filter:'blur(8px)',duration:1.15,stagger:.08,ease:'power3.out',scrollTrigger:{trigger:el,start:'top 68%',toggleActions:'play none none reverse'}})});
+window.addEventListener('load',()=>ScrollTrigger.refresh());document.fonts?.ready.then(()=>ScrollTrigger.refresh());
